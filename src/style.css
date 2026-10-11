@@ -46,3 +46,28 @@ html[data-theme="light"][data-palette="charcoal"] .welcome-card{background:radia
 .back-home-item svg{width:17px;height:17px;flex:0 0 17px}
 .back-home-item:not(:disabled):hover{background:var(--panel2);color:var(--text)}
 .back-home-item.is-home{opacity:.45;cursor:default}
+
+
+/* Team/client contact records and the floating quick-tools launcher */
+.member-list{display:grid;gap:10px}
+.member-card{display:flex;align-items:center;gap:13px;padding:15px;border:1px solid var(--line);border-radius:12px;background:var(--panel)}
+.member-avatar{display:grid;place-items:center;flex:none;width:42px;height:42px;border-radius:12px;background:var(--panel2);color:var(--accent);font-weight:800;font-size:12px}
+.member-info{min-width:0;flex:1}
+.member-info h3{font-size:12px;margin:0 0 5px}
+.member-info p{font-size:10px;color:var(--muted);margin:3px 0;overflow-wrap:anywhere}
+.member-info small{display:block;font-size:9px;color:var(--faint);margin-top:7px;line-height:1.6}
+.quick-tools{position:fixed;right:20px;bottom:20px;z-index:40}
+.quick-tools-toggle{display:flex;align-items:center;gap:9px;border:1px solid var(--line);border-radius:999px;padding:12px 16px;background:var(--panel);color:var(--text);box-shadow:0 12px 35px #0003;font-size:11px;font-weight:750}
+.quick-tools-toggle:first-letter{color:var(--accent)}
+.quick-tools-panel{position:absolute;right:0;bottom:54px;width:min(340px,calc(100vw - 28px));padding:12px;border:1px solid var(--line);border-radius:15px;background:var(--panel);box-shadow:0 20px 65px #0005}
+.quick-tools-panel[hidden]{display:none}
+.quick-tools-heading{display:flex;align-items:center;justify-content:space-between;padding:2px 3px 9px}
+.quick-tools-heading b{font-size:12px}
+.quick-tool-action{display:flex;align-items:center;gap:12px;width:100%;padding:12px 9px;text-align:left;border:0;border-radius:9px;background:transparent;color:var(--text)}
+.quick-tool-action:hover{background:var(--panel2)}
+.quick-tool-action>svg,.quick-tool-action>span:first-child{width:22px;min-width:22px;color:var(--accent);font-size:12px;font-weight:800;text-align:center}
+.quick-tool-action span{display:grid;gap:4px}
+.quick-tool-action b{font-size:10px}
+.quick-tool-action small{font-size:9px;color:var(--muted);line-height:1.5}
+.quick-tools-disclaimer{font-size:9px;line-height:1.65;color:var(--muted);padding:10px 8px 3px;margin:4px 0 0;border-top:1px solid var(--line)}
+@media(max-width:760px){.quick-tools{right:13px;bottom:13px}.quick-tools-toggle{padding:11px 13px}.quick-tools-panel{bottom:51px}.member-card{align-items:flex-start}}
