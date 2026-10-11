@@ -335,6 +335,7 @@ if (googleReturnStatus) {
     'session-expired':'The connection session expired. Please start again from Settings.',
     'invalid-state':'Google authorization could not be verified. Please try connecting again.',
     'scope-missing':'Google did not grant the requested permission. Reconnect and approve the Gmail send or Calendar events permission.',
+    'account-mismatch':'This browser is already connected to a different Google account. Disconnect it first if you want to switch accounts.',
     'failed':'Google connection did not complete. Check the server-side OAuth configuration and try again.'
   };
   showGoogleFeedback(messages[googleReturnStatus] || 'Google connection could not be completed.');
