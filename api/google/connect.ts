@@ -1,4 +1,4 @@
-import { connectionForSession, ensureSession, errorCode, googleAuthUrl, methodNotAllowed, originAllowed, randomToken, sendJson, sha256Hex, updateSession, type ApiRequest, type ApiResponse } from '../_lib/google';
+import { connectionForSession, ensureSession, errorCode, googleAuthUrl, methodNotAllowed, originAllowed, randomToken, sendJson, sha256Base64Url, sha256Hex, updateSession, type ApiRequest, type ApiResponse } from '../../server/google';
 
 export default async function handler(req: ApiRequest, res: ApiResponse): Promise<void> {
   if (req.method !== 'POST') return methodNotAllowed(res, 'POST');
@@ -10,7 +10,7 @@ export default async function handler(req: ApiRequest, res: ApiResponse): Promis
     const session = await ensureSession(req, res);
     const state = randomToken(32);
     const verifier = randomToken(48);
-    const challenge = await sha256Hex(verifier);
+    const challenge = await sha256Base64Url(verifier);
     const existingConnection = await connectionForSession(session.hash);
     const authorizeUrl = await googleAuthUrl(service, state, challenge, existingConnection);
     await updateSession(session.hash, {
