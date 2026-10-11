@@ -28,6 +28,7 @@ export default async function handler(req: ApiRequest, res: ApiResponse): Promis
     const oldScopes = previous && Array.isArray(previous.scopes) ? previous.scopes as string[] : [];
     const tokenScopes = typeof token.scope === 'string' ? token.scope.split(/\s+/).filter(Boolean) : [];
     const requestedScope = service === 'gmail' ? 'https://www.googleapis.com/auth/gmail.send' : 'https://www.googleapis.com/auth/calendar.events.owned';
+    if (!tokenScopes.includes(requestedScope) && !oldScopes.includes(requestedScope)) return appRedirect(res, 'scope-missing');
     const scopes = Array.from(new Set([...oldScopes, ...tokenScopes, 'openid', 'email', requestedScope]));
     await saveConnection({
       session_hash: session.hash,
