@@ -273,7 +273,7 @@ export async function getGoogleAccessToken(hash: string, requiredScope: string):
     google_email: connection.google_email,
     scopes,
     access_token_enc: await encryptSecret(tokenResponse.access_token),
-    refresh_token_enc: connection.refresh_token_enc,
+    refresh_token_enc: typeof tokenResponse.refresh_token === 'string' && tokenResponse.refresh_token ? await encryptSecret(tokenResponse.refresh_token) : connection.refresh_token_enc,
     access_expires_at: new Date(Date.now() + Number(tokenResponse.expires_in ?? 3600) * 1000).toISOString(),
     updated_at: new Date().toISOString()
   });
