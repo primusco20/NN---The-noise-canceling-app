@@ -149,7 +149,9 @@ async function getSessionByHash(hash: string): Promise<DbRow | null> {
   return rows[0] ?? null;
 }
 async function cleanupExpiredSessions(): Promise<void> {
-  await dbRequest(SESSION_TABLE, 'expires_at=lt.' + encodeURIComponent(new Date().toISOString()), 'DELETE');
+  const now = encodeURIComponent(new Date().toISOString());
+  await dbRequest(SESSION_TABLE, 'oauth_expires_at=lt.' + now, 'PATCH', { oauth_state_hash: null, pkce_verifier: null, oauth_service: null, oauth_expires_at: null }, 'return=minimal');
+  await dbRequest(SESSION_TABLE, 'expires_at=lt.' + now, 'DELETE');
 }
 async function getConnectionByHash(hash: string): Promise<DbRow | null> {
   const rows = await dbRequest(CONNECTION_TABLE, filterHash(hash));
