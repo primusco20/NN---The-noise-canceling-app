@@ -40,7 +40,7 @@ export default async function handler(req: ApiRequest, res: ApiResponse): Promis
       updated_at: new Date().toISOString()
     });
     return appRedirect(res, service + '-connected');
-  } catch (error) {
+  } catch {
     return appRedirect(res, 'failed');
   }
 }
