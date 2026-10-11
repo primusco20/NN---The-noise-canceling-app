@@ -1,4 +1,4 @@
-import { CALENDAR_SCOPE, errorCode, getGoogleAccessToken, getSession, originAllowed, readJson, sendJson, validEmail, type ApiRequest, type ApiResponse } from '../../_lib/google';
+import { CALENDAR_SCOPE, errorCode, getGoogleAccessToken, getSession, originAllowed, readJson, sendJson, validEmail, type ApiRequest, type ApiResponse } from '../../../server/google';
 
 export default async function handler(req: ApiRequest, res: ApiResponse): Promise<void> {
   if (req.method !== 'POST') {
