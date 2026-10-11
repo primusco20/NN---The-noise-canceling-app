@@ -38,6 +38,8 @@ function esc(value: string) { return value.replace(/[&<>"']/g, c => ({'&':'&amp;
 function icon(name: string) {
   const paths: Record<string,string> = {
     home:'<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="4" rx="1.5"/><rect x="14" y="10" width="7" height="11" rx="1.5"/><rect x="3" y="13" width="7" height="8" rx="1.5"/>',
+    team:'<path d="M16 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="10" cy="7" r="4"/><path d="M20 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>',
+    client:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 5V3h8v2M3 11h18M10 11v2h4v-2"/>',',
     meetings:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/>',
     calendar:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/><path d="M8 14h.01M12 14h.01M16 14h.01M8 17h.01M12 17h.01"/>',
     notes:'<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h8"/>',
@@ -61,7 +63,7 @@ function shell(content: string, subtitle: string) {
     <aside class="sidebar" id="sidebar">
       <a class="brand" href="#" data-page="Home"><span class="brand-mark">N</span><span>NN<small>NOISE CANCELING</small></span></a>
       <button class="workspace-switch"><span class="workspace-avatar">N</span><span><b>Personal workspace</b><small>Local workspace</small></span><span class="dots">•••</span></button>
-      <div class="nav-label">WORKSPACE</div><nav>${navButton('Home','Home')}${navButton('Calendar','Calendar')}${navButton('Meetings','Meetings')}${navButton('Team','Team')}${navButton('Client','Client')}${navButton('Notes','Notes')}${navButton('Chats','Chats')}</nav>
+      <div class="nav-label">WORKSPACE</div><nav>${navButton('Home','Home')}${navButton('Calendar','Calendar')}${navButton('Meetings','Meetings')}${navButton('Team','Team')}${navButton('Client','Client')}<button class="nav-item nav-add-member" id="nav-add-member">${icon('plus')}<span>Add</span></button>${navButton('Notes','Notes')}${navButton('Chats','Chats')}</nav>
       <div class="sidebar-bottom"><div class="privacy-mini"><span class="lock-dot">✓</span><span><b>Private by default</b><small>Your workspace stays in this browser.</small></span></div>${navButton('Settings','Settings')}<button class="nav-item back-home-item ${activePage==='Home'?'is-home':''}" data-page="Home" aria-label="Back to Home" ${activePage==='Home'?'disabled':''}>${icon('back')}<span>Back to Home</span></button><div class="profile"><span class="profile-avatar">NN</span><span><b>Personal account</b><small>Local-only mode</small></span><button class="icon-button" id="profile-menu" aria-label="Workspace information">•••</button></div></div>
     </aside>
     <main class="main-area"><header class="topbar"><button id="mobile-menu" class="icon-button mobile-only" aria-label="Open navigation">☰</button><div class="breadcrumbs">Workspace ${icon('chevron')} <b>${activePage}</b></div><div class="top-actions"><span class="secure-pill"><i></i> On-device workspace</span><button class="icon-button" data-page="Settings" aria-label="Settings">${icon('settings')}</button></div></header>
@@ -72,6 +74,7 @@ function shell(content: string, subtitle: string) {
   root!.querySelectorAll<HTMLElement>('[data-page]').forEach(el => el.addEventListener('click', e => { e.preventDefault(); const page=(el as HTMLElement).dataset.page; if(page) navigate(page); }));
   root!.querySelector<HTMLButtonElement>('#mobile-menu')?.addEventListener('click',()=>root!.querySelector('#sidebar')?.classList.toggle('mobile-open'));
   root!.querySelector<HTMLButtonElement>('#profile-menu')?.addEventListener('click',()=>navigate('Settings'));
+  root!.querySelector<HTMLButtonElement>('#nav-add-member')?.addEventListener('click',()=>{navigate('Team');root!.querySelector<HTMLDialogElement>('#member-dialog')?.showModal();});
   const quickPanel=root!.querySelector<HTMLElement>('#quick-tools-panel');
   const quickToggle=root!.querySelector<HTMLButtonElement>('#quick-tools-toggle');
   const setQuickOpen=(open:boolean)=>{if(quickPanel)quickPanel.hidden=!open;quickToggle?.setAttribute('aria-expanded',String(open));};
