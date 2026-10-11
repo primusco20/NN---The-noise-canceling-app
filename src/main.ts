@@ -338,5 +338,4 @@ if (googleReturnStatus) {
   };
   showGoogleFeedback(messages[googleReturnStatus] || 'Google connection could not be completed.');
   window.history.replaceState({}, '', window.location.pathname + window.location.hash);
-
-
+}
