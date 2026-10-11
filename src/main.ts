@@ -81,7 +81,7 @@ function shell(content: string, subtitle: string) {
   quickToggle?.addEventListener('click',()=>setQuickOpen(quickPanel?.hidden??true));
   root!.querySelector<HTMLButtonElement>('#quick-tools-close')?.addEventListener('click',()=>setQuickOpen(false));
   root!.querySelector<HTMLButtonElement>('#quick-tool-mic')?.addEventListener('click',()=>{setQuickOpen(false);if(activePage!=='Home')navigate('Home');const micButton=root!.querySelector<HTMLButtonElement>('#home-mic');micButton?.click();});
-  root!.querySelector<HTMLButtonElement>('#quick-tool-minutes')?.addEventListener('click',()=>{setQuickOpen(false);createNote();});
+  root!.querySelector<HTMLButtonElement>('#quick-tool-minutes')?.addEventListener('click',()=>{setQuickOpen(false);createMinutesNote();});
   root!.querySelector<HTMLButtonElement>('#quick-tool-captions')?.addEventListener('click',()=>alert('Live captions are not enabled in this build. Browser speech recognition support and its audio-processing privacy behavior must be validated before activation.'));
   root!.querySelector<HTMLButtonElement>('#quick-tool-nasrinai')?.addEventListener('click',()=>alert('NasrinAI is not connected yet. No audio or notes will be sent until a secure integration and explicit consent flow are implemented.'));
 }
@@ -194,11 +194,12 @@ function bindPage() {
   root!.querySelector<HTMLButtonElement>('#integration-dialog-close')?.addEventListener('click',()=>integrationDialog?.close());
   root!.querySelector<HTMLButtonElement>('#integration-dialog-done')?.addEventListener('click',()=>integrationDialog?.close());
   root!.querySelector<HTMLButtonElement>('#export-data')?.addEventListener('click',()=>{const blob=new Blob([JSON.stringify({exportedAt:new Date().toISOString(),meetings,members,notes,chats,settings},null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='nn-workspace-export.json';a.click();URL.revokeObjectURL(url);});
-  root!.querySelector<HTMLButtonElement>('#delete-data')?.addEventListener('click',()=>{if(confirm('Permanently delete all NN meetings, notes, chat drafts, and preferences saved in this browser? This cannot be undone.')){Object.values(KEYS).forEach(k=>localStorage.removeItem(k));meetings=[];notes=[];chats=[];members=[];settings={...defaults};selectedNote='';persist();render();}});
+  root!.querySelector<HTMLButtonElement>('#delete-data')?.addEventListener('click',()=>{if(confirm('Permanently delete all NN meetings, contacts, notes, chat drafts, and preferences saved in this browser? This cannot be undone.')){Object.values(KEYS).forEach(k=>localStorage.removeItem(k));meetings=[];notes=[];chats=[];members=[];settings={...defaults};selectedNote='';persist();render();}});
   const settingsSections=root!.querySelectorAll<HTMLElement>('.settings-section');settingsSections.forEach(section=>section.hidden=section.dataset.settingsSection!=='audio');
   root!.querySelectorAll<HTMLElement>('[data-settings-tab]').forEach(el=>el.addEventListener('click',()=>{const target=el.dataset.settingsTab;root!.querySelectorAll('[data-settings-tab]').forEach(x=>x.classList.toggle('active',x===el));settingsSections.forEach(section=>{section.hidden=section.dataset.settingsSection!==target;});}));
   root!.querySelectorAll<HTMLButtonElement>('.stat-card,.quick-card').forEach(el=>el.addEventListener('click',()=>{const p=el.dataset.page;if(p)navigate(p);}));
 }
+function createMinutesNote(){const n:Note={id:crypto.randomUUID(),title:'Meeting minutes — '+new Date().toLocaleDateString(),body:['Meeting:','Date:','Participants:','','Summary:','','Decisions:','','Action items:',''].join('\n'),updatedAt:new Date().toISOString()};notes.unshift(n);selectedNote=n.id;persist();navigate('Notes');}
 function createNote(){const n:Note={id:crypto.randomUUID(),title:'',body:'',updatedAt:new Date().toISOString()};notes.unshift(n);selectedNote=n.id;persist();navigate('Notes');}
 window.addEventListener('pagehide',()=>{cancelAnimationFrame(raf);stream?.getTracks().forEach(t=>t.stop());if(context&&context.state!=='closed')void context.close();});
 render();
