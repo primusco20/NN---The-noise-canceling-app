@@ -8,6 +8,7 @@ NN is a separate, privacy-first web app for microphone checks, meeting organizat
 
 - **Navigation:** Home, Meetings, Notes, Chats, and Settings.
 - **Microphone check:** Explicit permission request, browser-native noise suppression / echo cancellation / automatic gain control when supported, and a local input-level meter.
+- **Calendar:** Browse a responsive monthly calendar, jump to today, select a date, see scheduled meetings, and create events that are also listed in Meetings.
 - **Meetings:** Create, search, review, and delete meeting records with a date, attendees, and agenda. Open a meeting's associated notes.
 - **Notes:** Create and edit notes with automatic local saving and delete controls.
 - **Chats:** Save local message drafts and use prompt starters. This is a local draft area, not an AI chat service; it does not generate assistant responses.
