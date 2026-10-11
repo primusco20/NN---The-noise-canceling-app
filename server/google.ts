@@ -146,6 +146,9 @@ async function getSessionByHash(hash: string): Promise<DbRow | null> {
   const rows = await dbRequest(SESSION_TABLE, filterHash(hash));
   return rows[0] ?? null;
 }
+async function cleanupExpiredSessions(): Promise<void> {
+  await dbRequest(SESSION_TABLE, 'expires_at=lt.' + encodeURIComponent(new Date().toISOString()), 'DELETE');
+}
 async function getConnectionByHash(hash: string): Promise<DbRow | null> {
   const rows = await dbRequest(CONNECTION_TABLE, filterHash(hash));
   return rows[0] ?? null;
@@ -157,6 +160,7 @@ async function deleteByHash(table: string, hash: string): Promise<void> {
   await dbRequest(table, 'session_hash=eq.' + encodeURIComponent(hash), 'DELETE');
 }
 export async function getSession(req: ApiRequest): Promise<{ hash: string; row: DbRow } | null> {
+  await cleanupExpiredSessions();
   const cookie = cookieValue(req, SESSION_COOKIE);
   if (!cookie) return null;
   const hash = await sha256Hex(cookie);
@@ -165,6 +169,7 @@ export async function getSession(req: ApiRequest): Promise<{ hash: string; row: 
   return { hash, row };
 }
 export async function ensureSession(req: ApiRequest, res: ApiResponse): Promise<{ hash: string; row: DbRow }> {
+  await cleanupExpiredSessions();
   const currentCookie = cookieValue(req, SESSION_COOKIE);
   if (currentCookie) {
     const hash = await sha256Hex(currentCookie);
