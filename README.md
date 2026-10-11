@@ -1,13 +1,18 @@
 # NN — The Noise Canceling App
 
-A separate web app for cleaner meeting audio and, in later phases, meeting transcription and notes.
+Production domain: https://nn.nasrinai.com
 
-## Current milestone: audio foundation
+NN is a separate, privacy-first web app for microphone checks, meeting organization, notes, and chat drafts.
 
-- Explicit-click microphone permission request.
-- Browser-native noise suppression, echo cancellation, and automatic gain control constraints.
-- Local live input-level meter and start/stop cleanup.
-- No recording or audio upload in this prototype.
+## Current workspace features
+
+- **Navigation:** Home, Meetings, Notes, Chats, and Settings.
+- **Microphone check:** Explicit permission request, browser-native noise suppression / echo cancellation / automatic gain control when supported, and a local input-level meter.
+- **Meetings:** Create, search, review, and delete meeting records with a date, attendees, and agenda. Open a meeting's associated notes.
+- **Notes:** Create and edit notes with automatic local saving and delete controls.
+- **Chats:** Save local message drafts and use prompt starters. This is a local draft area, not an AI chat service; it does not generate assistant responses.
+- **Settings:** Audio preferences, dark/light theme, JSON export, and deletion of local workspace data.
+- **Local-first data:** Meetings, notes, chats, and preferences are stored in this browser's localStorage. There is no account, cloud sync, transcription upload, or server-side persistence in this milestone.
 
 ## Run locally
 
@@ -22,21 +27,23 @@ npm run build
 
 ## Privacy and security
 
-- This prototype does not record, upload, or persist microphone audio. The microphone signal is analyzed locally for a level meter only and is not routed to speakers.
-- Browser audio constraints may not be supported uniformly; test on target browsers and devices.
-- The local AI denoising model and AudioWorklet are **not implemented yet**. Validate quality, latency, CPU use, clipping, and model/runtime licensing before shipping a model.
-- Never expose cloud provider API keys in client-side code. Add server-side adapters for transcription and summaries.
-- Cloud transcription sends audio to the selected provider even if saved notes are stored locally. Explain this clearly and obtain consent before upload.
-- When storage is added, use private records/buckets, least-privilege access, retention controls, and a tested deletion path.
+- The microphone signal is analyzed locally for the level meter only; it is not recorded, uploaded, or routed to speakers by this prototype.
+- Browser audio constraints are best-effort requests and may not be supported uniformly. Verify actual browser settings and test across target devices.
+- **Local AI denoising is not implemented yet.** The current app requests native browser noise suppression only.
+- LocalStorage is not encrypted storage and may be removed by the browser or anyone with access to the same browser profile. Do not store sensitive meeting content on shared devices.
+- JSON export includes workspace content. Keep the downloaded export secure.
+- Never put cloud provider API keys in client-side code. Cloud transcription and summaries require server-side provider adapters, clear disclosure, and explicit consent before audio upload.
+- Before adding cloud storage, use private records/buckets, least-privilege access, retention controls, and a tested deletion path.
+- Optional NasrinAI integration must remain separate and require an explicit user action and clear permission.
 
 ## Planned sequence
 
-1. Audio capture and native fallback (current milestone).
-2. Local AI denoising using a tested WASM model and AudioWorklet.
-3. Explicit opt-in cloud transcription and summaries.
-4. User-selected local/cloud notes storage.
-5. Optional NasrinAI integration with explicit user action and separate permissions.
-6. Browser compatibility, security, accessibility, and privacy QA.
+1. Improve and validate the local workspace foundation.
+2. Add a tested local AI denoising model through an AudioWorklet/WASM pipeline; benchmark quality, latency, CPU, and clipping.
+3. Add explicit opt-in cloud transcription and meeting summaries.
+4. Add user-selected local/cloud notes storage with export, retention, and deletion.
+5. Add optional NasrinAI integration behind explicit consent.
+6. Run type checks, production builds, browser compatibility, security, accessibility, and privacy QA.
 
 ## Product limitation
 
