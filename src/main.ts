@@ -101,14 +101,14 @@ function startMic() {
   const notice=root!.querySelector<HTMLElement>('#mic-notice');
   if(!start||!stop||!level||!status||!notice)return;
   const startHandler=async()=>{
-    if(!navigator.mediaDevices?.getUserMedia){notice.textContent='Microphone capture is unavailable in this browser. Use a current browser over HTTPS.';return;}
+    if(!navigator.mediaDevices?.getUserMedia){start.disabled=false;notice.textContent='Microphone capture is unavailable in this browser. Use a current browser over HTTPS.';return;}
     start.disabled=true;notice.textContent='Waiting for microphone permission…';
     try {
       stream=await navigator.mediaDevices.getUserMedia({audio:{noiseSuppression:settings.noiseSuppression,echoCancellation:settings.echoCancellation,autoGainControl:settings.autoGain},video:false});
       context=new AudioContext();await context.resume();const source=context.createMediaStreamSource(stream);const analyser=context.createAnalyser();analyser.fftSize=512;source.connect(analyser);const data=new Uint8Array(analyser.fftSize);
       micActive=true;status.textContent='Microphone active';status.classList.add('active');stop.disabled=false;start.innerHTML=icon('mic')+' Microphone active';notice.textContent='Audio levels are analyzed locally for this meter only. No audio is recorded or uploaded.';
       const tick=()=>{if(!analyser)return;analyser.getByteTimeDomainData(data);let sum=0;for(const v of data){const n=(v-128)/128;sum+=n*n;}level.value=Math.min(1,Math.sqrt(sum/data.length)*4);raf=requestAnimationFrame(tick);};tick();
-    } catch(e) { stream?.getTracks().forEach(t=>t.stop());stream=null;start.disabled=false;status.textContent='Needs attention';notice.textContent=e instanceof DOMException&&e.name==='NotAllowedError'?'Microphone permission denied. Allow access in browser settings, then retry.':'Could not start the microphone. Check the selected device and permissions.'; }
+    } catch(e) { stream?.getTracks().forEach(t=>t.stop());stream=null;if(context&&context.state!=='closed')void context.close();context=null;start.disabled=false;status.textContent='Needs attention';notice.textContent=e instanceof DOMException&&e.name==='NotAllowedError'?'Microphone permission denied. Allow access in browser settings, then retry.':'Could not start the microphone. Check the selected device and permissions.'; }
   };
   const stopHandler=()=>{stopMicrophone();render();};
   start.addEventListener('click',()=>void startHandler());stop.addEventListener('click',stopHandler);
@@ -129,8 +129,8 @@ function bindPage() {
   root!.querySelector<HTMLButtonElement>('#new-note')?.addEventListener('click',createNote);
   root!.querySelector<HTMLButtonElement>('#first-note')?.addEventListener('click',createNote);
   root!.querySelectorAll<HTMLElement>('[data-select-note]').forEach(el=>el.addEventListener('click',()=>{selectedNote=el.dataset.selectNote??'';render();}));
-  const title=root!.querySelector<HTMLInputElement>('#note-title');const body=root!.querySelector<HTMLTextAreaElement>('#note-body');let saveTimer=0;
-  const saveNote=()=>{const n=notes.find(x=>x.id===selectedNote);if(!n)return;n.title=title?.value??n.title;n.body=body?.value??n.body;n.updatedAt=new Date().toISOString();persist();const s=root!.querySelector<HTMLElement>('#note-status');if(s)s.textContent='Saved just now';const count=root!.querySelector<HTMLElement>('.editor-bottom span:last-child');if(count&&body)count.textContent=body.value.length+' characters';};
+  const title=root!.querySelector<HTMLInputElement>('#note-title');const body=root!.querySelector<HTMLTextAreaElement>('#note-body');const editingNoteId=selectedNote;let saveTimer=0;
+  const saveNote=()=>{const n=notes.find(x=>x.id===editingNoteId);if(!n)return;n.title=title?.value??n.title;n.body=body?.value??n.body;n.updatedAt=new Date().toISOString();persist();const s=root!.querySelector<HTMLElement>('#note-status');if(s)s.textContent='Saved just now';const count=root!.querySelector<HTMLElement>('.editor-bottom span:last-child');if(count&&body)count.textContent=body.value.length+' characters';};
   title?.addEventListener('input',()=>{window.clearTimeout(saveTimer);saveTimer=window.setTimeout(saveNote,250);});body?.addEventListener('input',()=>{window.clearTimeout(saveTimer);saveTimer=window.setTimeout(saveNote,250);});
   root!.querySelector<HTMLButtonElement>('#delete-note')?.addEventListener('click',()=>{if(confirm('Delete this note from this browser?')){notes=notes.filter(n=>n.id!==selectedNote);selectedNote=notes[0]?.id??'';persist();render();}});
   root!.querySelector<HTMLFormElement>('#chat-form')?.addEventListener('submit',e=>{e.preventDefault();const input=root!.querySelector<HTMLTextAreaElement>('#chat-input');const text=input?.value.trim();if(!text)return;chats.push({id:crypto.randomUUID(),role:'user',text,createdAt:new Date().toISOString()});persist();render();});
