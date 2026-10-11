@@ -16,7 +16,7 @@ NN is a separate, privacy-first web app for microphone checks, meeting organizat
 - **Quick tools:** A floating launcher offers shortcuts to the microphone meter and local note creation. Captions and NasrinAI connection actions explicitly report that they are not enabled; they do not upload audio or claim to be connected.
 - **Settings:** Audio preferences, light/dark/system appearance, Orange/Charcoal/Galaxy color palettes, JSON export, and deletion of local workspace data.
 - **Integration directory:** Setup cards for Gmail, Outlook/Microsoft 365, Yahoo Mail, Apple Mail/iCloud Mail, generic IMAP/SMTP, Slack, Google Meet, Microsoft Teams, and Zoom. These are integration placeholders; account authorization and live data sync are not implemented until secure provider OAuth/API backends are configured.
-- **Local-first data:** Meetings, notes, chats, and preferences are stored in this browser's localStorage. There is no account, cloud sync, transcription upload, or server-side persistence in this milestone.
+- **Local-first data:** Meetings, contacts, notes, chats, and preferences are stored in this browser's localStorage. There is no account, cloud sync, transcription upload, or server-side persistence in this milestone.
 
 ## Run locally
 
