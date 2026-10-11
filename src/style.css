@@ -71,3 +71,20 @@ html[data-theme="light"][data-palette="charcoal"] .welcome-card{background:radia
 .quick-tool-action small{font-size:9px;color:var(--muted);line-height:1.5}
 .quick-tools-disclaimer{font-size:9px;line-height:1.65;color:var(--muted);padding:10px 8px 3px;margin:4px 0 0;border-top:1px solid var(--line)}
 @media(max-width:760px){.quick-tools{right:13px;bottom:13px}.quick-tools-toggle{padding:11px 13px}.quick-tools-panel{bottom:51px}.member-card{align-items:flex-start}}
+
+
+/* Google OAuth connection and explicit send controls */
+.integration-status.connected{color:var(--success,#3ca879);border-color:currentColor}
+.google-connection-control{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:13px 15px;margin:12px 0;border:1px solid var(--line);border-radius:12px;background:var(--panel)}
+.google-connection-control[hidden],.gmail-compose-panel[hidden]{display:none}
+#google-account-email{font-size:11px;color:var(--muted);overflow-wrap:anywhere}
+#google-oauth-feedback{margin:10px 0;padding:10px 12px;border-radius:9px;background:var(--panel2);font-size:11px;line-height:1.6}
+#google-oauth-feedback[hidden]{display:none}
+.gmail-compose-panel{margin:16px 0;padding:17px;border:1px solid var(--line);border-radius:13px;background:var(--panel)}
+.gmail-compose-panel h3{margin:0 0 14px;font-size:13px}
+.gmail-compose-panel form{display:grid;gap:12px}
+.gmail-compose-panel label{display:grid;gap:6px;font-size:10px;color:var(--muted)}
+.gmail-compose-panel input,.gmail-compose-panel textarea{width:100%;border:1px solid var(--line);border-radius:9px;padding:10px 12px;background:var(--bg);color:var(--text);font:inherit;font-size:12px}
+.gmail-compose-panel textarea{resize:vertical;min-height:100px}
+[data-send-google-invite]{margin-top:8px}
+@media(max-width:600px){.google-connection-control{align-items:flex-start;flex-direction:column}.google-connection-control button{width:100%}}
