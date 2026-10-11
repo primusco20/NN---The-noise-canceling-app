@@ -9,14 +9,14 @@ NN is a separate, privacy-first web app for microphone checks, meeting organizat
 - **Navigation:** Home, Calendar, Meetings, Notes, Chats, and Settings, plus a menu action to return to Home from any section.
 - **Microphone check:** Explicit permission request, browser-native noise suppression / echo cancellation / automatic gain control when supported, and a local input-level meter.
 - **Calendar:** Browse a responsive monthly calendar, jump to today, select a date, see scheduled meetings, and create events that are also listed in Meetings.
-- **Meetings:** Create, search, review, and delete meeting records with date, start/end time, time zone, platform, location or meeting link, attendee names, invitee email addresses, reminder preference, and agenda. Open a meeting's associated notes. All records remain local; invite delivery, calendar writes, and reminder notifications are not connected yet.
+- **Meetings:** Create, search, review, and delete meeting records with date, start/end time, time zone, platform, location or meeting link, attendee names, invitee email addresses, reminder preference, and agenda. Open a meeting's associated notes. Records remain local by default. After Google OAuth is configured, the user can explicitly send an event to their primary Google Calendar with attendee invitations and supported 15/30/60-minute popup reminders.
 - **Team & Clients:** Add and remove Team, Client, or Other contacts with first/last name, email, optional phone, email-provider preference, and meeting-platform preference. Contact data is stored locally in the browser.
 - **Notes:** Create and edit notes with automatic local saving and delete controls.
 - **Chats:** Save local message drafts and use prompt starters. This is a local draft area, not an AI chat service; it does not generate assistant responses.
 - **Quick tools:** A floating launcher offers shortcuts to the microphone meter and local note creation. Captions and NasrinAI connection actions explicitly report that they are not enabled; they do not upload audio or claim to be connected.
-- **Settings:** Audio preferences, light/dark/system appearance, Orange/Charcoal/Galaxy color palettes, JSON export, and deletion of local workspace data.
+- **Settings:** Audio preferences, light/dark/system appearance, Orange/Charcoal/Galaxy color palettes, JSON export, deletion of local workspace data, and Google Gmail/Calendar connection controls (server setup required).
 - **Integration directory:** Google Gmail and Google Calendar have server-side OAuth routes and explicit email/event actions; those require the setup above before they can be used. Outlook/Microsoft 365, Yahoo Mail, Apple Mail/iCloud Mail, generic IMAP/SMTP, Slack, Google Meet, Teams, and Zoom remain placeholders.
-- **Local-first data:** Meetings, contacts, notes, chats, and preferences are stored in this browser's localStorage. There is no account, cloud sync, transcription upload, or server-side persistence in this milestone.
+- **Local-first data:** Meetings, contacts, notes, chats, and preferences remain in this browser's localStorage. Google OAuth session metadata and encrypted Google tokens are stored server-side in Supabase when OAuth is configured; the app's local workspace is not automatically synced.
 
 ## Run locally
 
@@ -42,7 +42,7 @@ npm run build
 
 ## Integration security and current limitations
 
-- The Integrations settings page does not connect accounts yet. Its Connect buttons explain the setup requirements and do not open provider authorization or access user data.
+- Gmail and Google Calendar have OAuth start/callback/status/disconnect routes in this branch. They remain unavailable until Google Cloud OAuth settings, server-only Vercel environment variables, and the reviewed Supabase migration are configured.
 - Gmail/Google Meet require Google OAuth consent and API scopes; Outlook/Microsoft 365 and Teams require Microsoft identity/app registration and Graph permissions; Yahoo Mail needs an approved authorization/API approach; Zoom and Slack each require their own OAuth apps and scopes.
 - Apple Mail is a client rather than one universal email service. Connection support depends on the underlying account provider (for example iCloud Mail, Microsoft 365, or a supported IMAP server). Generic IMAP/SMTP support must be implemented server-side with secure credential/token handling and provider-specific restrictions.
 - Before enabling any live integration, add server-side OAuth start/callback routes, CSRF/state validation, encrypted token storage, least-privilege scopes, disconnect/revocation, privacy disclosures, and tests. Never collect email passwords or provider API secrets in browser UI code.
