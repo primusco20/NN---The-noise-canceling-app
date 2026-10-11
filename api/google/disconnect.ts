@@ -1,4 +1,4 @@
-import { connectionForSession, deleteConnection, decryptSecret, errorCode, getSession, originAllowed, revokeGoogleToken, sendJson, type ApiRequest, type ApiResponse } from '../_lib/google';
+import { connectionForSession, deleteConnection, decryptSecret, errorCode, getSession, originAllowed, revokeGoogleToken, sendJson, type ApiRequest, type ApiResponse } from '../../server/google';
 
 export default async function handler(req: ApiRequest, res: ApiResponse): Promise<void> {
   if (req.method !== 'POST') {
