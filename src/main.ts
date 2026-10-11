@@ -39,7 +39,7 @@ function icon(name: string) {
   const paths: Record<string,string> = {
     home:'<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="4" rx="1.5"/><rect x="14" y="10" width="7" height="11" rx="1.5"/><rect x="3" y="13" width="7" height="8" rx="1.5"/>',
     team:'<path d="M16 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="10" cy="7" r="4"/><path d="M20 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>',
-    client:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 5V3h8v2M3 11h18M10 11v2h4v-2"/>',',
+    client:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 5V3h8v2M3 11h18M10 11v2h4v-2"/>',
     meetings:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/>',
     calendar:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/><path d="M8 14h.01M12 14h.01M16 14h.01M8 17h.01M12 17h.01"/>',
     notes:'<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h8"/>',
@@ -167,7 +167,7 @@ function bindPage() {
   root!.querySelector<HTMLButtonElement>('#new-member')?.addEventListener('click',()=>root!.querySelector<HTMLDialogElement>('#member-dialog')?.showModal());
   root!.querySelector<HTMLButtonElement>('#empty-member')?.addEventListener('click',()=>root!.querySelector<HTMLDialogElement>('#member-dialog')?.showModal());
   root!.querySelector<HTMLButtonElement>('#member-close')?.addEventListener('click',()=>root!.querySelector<HTMLDialogElement>('#member-dialog')?.close());
-  root!.querySelector<HTMLFormElement>('#member-form')?.addEventListener('submit',e=>{e.preventDefault();const d=new FormData(e.currentTarget as HTMLFormElement);const firstName=String(d.get('firstName')).trim(),lastName=String(d.get('lastName')).trim(),email=String(d.get('email')).trim();if(email&&!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)){alert('Enter a valid email address or leave it blank.');return;}members.push({id:crypto.randomUUID(),firstName,lastName,email,phone:String(d.get('phone')).trim(),category:String(d.get('category')) as Member['category'],emailProvider:String(d.get('emailProvider')),meetingPlatform:String(d.get('meetingPlatform')),createdAt:new Date().toISOString()});persist();render();});
+  root!.querySelector<HTMLFormElement>('#member-form')?.addEventListener('submit',e=>{e.preventDefault();const d=new FormData(e.currentTarget as HTMLFormElement);const firstName=String(d.get('firstName')).trim(),lastName=String(d.get('lastName')).trim(),email=String(d.get('email')).trim();if(email&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){alert('Enter a valid email address or leave it blank.');return;}members.push({id:crypto.randomUUID(),firstName,lastName,email,phone:String(d.get('phone')).trim(),category:String(d.get('category')) as Member['category'],emailProvider:String(d.get('emailProvider')),meetingPlatform:String(d.get('meetingPlatform')),createdAt:new Date().toISOString()});persist();render();});
   root!.querySelectorAll<HTMLElement>('[data-delete-member]').forEach(el=>el.addEventListener('click',()=>{if(confirm('Delete this contact from this browser?')){members=members.filter(m=>m.id!==el.dataset.deleteMember);persist();render();}}));
   root!.querySelector<HTMLButtonElement>('#new-meeting')?.addEventListener('click',()=> (root!.querySelector<HTMLDialogElement>('#meeting-dialog'))?.showModal());
   root!.querySelector<HTMLButtonElement>('#empty-meeting')?.addEventListener('click',()=> (root!.querySelector<HTMLDialogElement>('#meeting-dialog'))?.showModal());
