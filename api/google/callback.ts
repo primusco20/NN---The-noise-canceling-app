@@ -1,4 +1,4 @@
-import { appRedirect, connectionForSession, encryptSecret, exchangeGoogleCode, getSession, googleUserInfo, parseUrl, saveConnection, sha256Hex, updateSession, type ApiRequest, type ApiResponse } from '../_lib/google';
+import { appRedirect, connectionForSession, encryptSecret, exchangeGoogleCode, getSession, googleUserInfo, parseUrl, saveConnection, sha256Hex, updateSession, type ApiRequest, type ApiResponse } from '../../server/google';
 
 export default async function handler(req: ApiRequest, res: ApiResponse): Promise<void> {
   if (req.method !== 'GET') return res.redirect(302, '/?google=method-not-allowed');
