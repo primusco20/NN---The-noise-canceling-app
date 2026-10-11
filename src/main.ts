@@ -264,22 +264,7 @@ async function saveMeetingForm(form: HTMLFormElement, sendGoogleInvite: boolean,
     if (typeof result.htmlLink === 'string' && result.htmlLink.startsWith('https://calendar.google.com/')) meeting.googleEventUrl = result.htmlLink;
     persist();
     render();
-const googleReturnStatus = new URLSearchParams(window.location.search).get('google');
-if (googleReturnStatus) {
-  navigate('Settings');
-  root!.querySelector<HTMLButtonElement>('[data-settings-tab="integrations"]')?.click();
-  const messages: Record<string,string> = {
-    'gmail-connected':'Gmail connected successfully.',
-    'calendar-connected':'Google Calendar connected successfully.',
-    'cancelled':'Google connection was cancelled.',
-    'refresh-token-missing':'Google did not return a refresh token. Retry Connect and approve the requested permissions.',
-    'session-expired':'The connection session expired. Please start again from Settings.',
-    'invalid-state':'Google authorization could not be verified. Please try connecting again.',
-    'failed':'Google connection did not complete. Check the server-side OAuth configuration and try again.'
-  };
-  showGoogleFeedback(messages[googleReturnStatus] || 'Google connection could not be completed.');
-  window.history.replaceState({}, '', window.location.pathname + window.location.hash);
-}
+
     alert('Meeting saved locally and Google Calendar invitation sent.');
   } catch (error) {
     render();
@@ -338,3 +323,20 @@ function createMinutesNote(){const n:Note={id:crypto.randomUUID(),title:'Meeting
 function createNote(){const n:Note={id:crypto.randomUUID(),title:'',body:'',updatedAt:new Date().toISOString()};notes.unshift(n);selectedNote=n.id;persist();navigate('Notes');}
 window.addEventListener('pagehide',()=>{cancelAnimationFrame(raf);stream?.getTracks().forEach(t=>t.stop());if(context&&context.state!=='closed')void context.close();});
 render();
+const googleReturnStatus = new URLSearchParams(window.location.search).get('google');
+if (googleReturnStatus) {
+  navigate('Settings');
+  root!.querySelector<HTMLButtonElement>('[data-settings-tab="integrations"]')?.click();
+  const messages: Record<string,string> = {
+    'gmail-connected':'Gmail connected successfully.',
+    'calendar-connected':'Google Calendar connected successfully.',
+    'cancelled':'Google connection was cancelled.',
+    'refresh-token-missing':'Google did not return a refresh token. Retry Connect and approve the requested permissions.',
+    'session-expired':'The connection session expired. Please start again from Settings.',
+    'invalid-state':'Google authorization could not be verified. Please try connecting again.',
+    'failed':'Google connection did not complete. Check the server-side OAuth configuration and try again.'
+  };
+  showGoogleFeedback(messages[googleReturnStatus] || 'Google connection could not be completed.');
+  window.history.replaceState({}, '', window.location.pathname + window.location.hash);
+
+
