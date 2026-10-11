@@ -24,9 +24,12 @@ export default async function handler(req: ApiRequest, res: ApiResponse): Promis
     const validTime = (value: string) => { const match = /^(\d{2}):(\d{2})$/.exec(value); return !value || Boolean(match && Number(match[1]) < 24 && Number(match[2]) < 60); };
     if (!title || !/^\d{4}-\d{2}-\d{2}$/.test(date) || Number.isNaN(parsedDate.getTime()) || parsedDate.toISOString().slice(0, 10) !== date) return sendJson(res, 400, { error: 'invalid_event_details' });
     if (!validTime(startTime) || !validTime(endTime)) return sendJson(res, 400, { error: 'invalid_event_time' });
+    if ((startTime && !endTime) || (!startTime && endTime)) return sendJson(res, 400, { error: 'both_start_and_end_time_required' });
     if (startTime && endTime && endTime <= startTime) return sendJson(res, 400, { error: 'end_time_must_follow_start_time' });
     if (attendeeEmails.length > 100 || attendeeEmails.some(email => !validEmail(email))) return sendJson(res, 400, { error: 'invalid_invitee_email' });
     try { new Intl.DateTimeFormat('en-US', { timeZone: timezone }); } catch { return sendJson(res, 400, { error: 'invalid_time_zone' }); }
+    const reminderChoice = String(body.reminder ?? 'none');
+    if (reminderChoice === 'custom') return sendJson(res, 400, { error: 'custom_reminder_not_supported' });
     const { token } = await getGoogleAccessToken(session.hash, CALENDAR_SCOPE);
     if (!(await consumeRateLimit(session.hash, 'calendar_create', 30))) return sendJson(res, 429, { error: 'rate_limit_exceeded' });
     const description = [platform ? 'Platform: ' + platform : '', agenda].filter(Boolean).join('\n\n');
@@ -36,13 +39,10 @@ export default async function handler(req: ApiRequest, res: ApiResponse): Promis
       ...(description ? { description } : {}),
       ...(attendeeEmails.length ? { attendees: attendeeEmails.map(email => ({ email })) } : {})
     };
-    const reminderChoice = String(body.reminder ?? 'none');
-    if (reminderChoice === 'custom') return sendJson(res, 400, { error: 'custom_reminder_not_supported' });
     const reminderMinutes = ['15', '30', '60'].includes(reminderChoice) ? Number(reminderChoice) : 0;
     if (reminderChoice === 'none') event.reminders = { useDefault: false, overrides: [] };
     else if (reminderMinutes) event.reminders = { useDefault: false, overrides: [{ method: 'popup', minutes: reminderMinutes }] };
     if (startTime || endTime) {
-      if (!startTime || !endTime) return sendJson(res, 400, { error: 'both_start_and_end_time_required' });
       event.start = { dateTime: date + 'T' + startTime + ':00', timeZone: timezone };
       event.end = { dateTime: date + 'T' + endTime + ':00', timeZone: timezone };
     } else {
