@@ -5,7 +5,11 @@ export default async function handler(req: ApiRequest, res: ApiResponse): Promis
   try {
     const url = parseUrl(req);
     const oauthError = url.searchParams.get('error');
-    if (oauthError) return appRedirect(res, oauthError === 'access_denied' ? 'cancelled' : 'failed');
+    if (oauthError) {
+      const pendingSession = await getSession(req);
+      if (pendingSession) await updateSession(pendingSession.hash, { oauth_state_hash: null, pkce_verifier: null, oauth_service: null, oauth_expires_at: null });
+      return appRedirect(res, oauthError === 'access_denied' ? 'cancelled' : 'failed');
+    }
     const code = url.searchParams.get('code') ?? '';
     const state = url.searchParams.get('state') ?? '';
     if (!code || !state) return appRedirect(res, 'failed');
