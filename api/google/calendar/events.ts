@@ -20,8 +20,10 @@ export default async function handler(req: ApiRequest, res: ApiResponse): Promis
     const platform = typeof body.platform === 'string' ? body.platform.trim().slice(0, 100) : '';
     const attendeesRaw = typeof body.inviteEmails === 'string' ? body.inviteEmails : '';
     const attendeeEmails = Array.from(new Set(attendeesRaw.split(/[,\n;]/).map(value => value.trim()).filter(Boolean)));
-    if (!title || !/^\d{4}-\d{2}-\d{2}$/.test(date) || Number.isNaN(Date.parse(date + 'T12:00:00Z'))) return sendJson(res, 400, { error: 'invalid_event_details' });
-    if ((startTime && !/^\d{2}:\d{2}$/.test(startTime)) || (endTime && !/^\d{2}:\d{2}$/.test(endTime))) return sendJson(res, 400, { error: 'invalid_event_time' });
+    const parsedDate = new Date(date + 'T12:00:00Z');
+    const validTime = (value: string) => { const match = /^(\d{2}):(\d{2})$/.exec(value); return !value || Boolean(match && Number(match[1]) < 24 && Number(match[2]) < 60); };
+    if (!title || !/^\d{4}-\d{2}-\d{2}$/.test(date) || Number.isNaN(parsedDate.getTime()) || parsedDate.toISOString().slice(0, 10) !== date) return sendJson(res, 400, { error: 'invalid_event_details' });
+    if (!validTime(startTime) || !validTime(endTime)) return sendJson(res, 400, { error: 'invalid_event_time' });
     if (startTime && endTime && endTime <= startTime) return sendJson(res, 400, { error: 'end_time_must_follow_start_time' });
     if (attendeeEmails.length > 100 || attendeeEmails.some(email => !validEmail(email))) return sendJson(res, 400, { error: 'invalid_invitee_email' });
     try { new Intl.DateTimeFormat('en-US', { timeZone: timezone }); } catch { return sendJson(res, 400, { error: 'invalid_time_zone' }); }
@@ -34,6 +36,8 @@ export default async function handler(req: ApiRequest, res: ApiResponse): Promis
       ...(description ? { description } : {}),
       ...(attendeeEmails.length ? { attendees: attendeeEmails.map(email => ({ email })) } : {})
     };
+    const reminderMinutes = ['15', '30', '60'].includes(String(body.reminder ?? '')) ? Number(body.reminder) : 0;
+    if (reminderMinutes) event.reminders = { useDefault: false, overrides: [{ method: 'popup', minutes: reminderMinutes }] };
     if (startTime || endTime) {
       if (!startTime || !endTime) return sendJson(res, 400, { error: 'both_start_and_end_time_required' });
       event.start = { dateTime: date + 'T' + startTime + ':00', timeZone: timezone };
