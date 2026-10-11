@@ -44,7 +44,8 @@ function icon(name: string) {
     mic:'<rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 17v5M9 22h6"/>',
     search:'<circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/>',
     chevron:'<path d="m9 18 6-6-6-6"/>',
-    trash:'<path d="M3 6h18M8 6V4h8v2m3 0-1 14H6L5 6m4 4v6m6-6v6"/>'
+    trash:'<path d="M3 6h18M8 6V4h8v2m3 0-1 14H6L5 6m4 4v6m6-6v6"/>',
+    back:'<path d="M19 12H5M12 19l-7-7 7-7"/>'
   };
   return '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">'+(paths[name] ?? paths.home)+'</svg>';
 }
@@ -58,7 +59,7 @@ function shell(content: string, subtitle: string) {
       <a class="brand" href="#" data-page="Home"><span class="brand-mark">N</span><span>NN<small>NOISE CANCELING</small></span></a>
       <button class="workspace-switch"><span class="workspace-avatar">N</span><span><b>Personal workspace</b><small>Local workspace</small></span><span class="dots">•••</span></button>
       <div class="nav-label">WORKSPACE</div><nav>${navButton('Home','Home')}${navButton('Calendar','Calendar')}${navButton('Meetings','Meetings')}${navButton('Notes','Notes')}${navButton('Chats','Chats')}</nav>
-      <div class="sidebar-bottom"><div class="privacy-mini"><span class="lock-dot">✓</span><span><b>Private by default</b><small>Your workspace stays in this browser.</small></span></div>${navButton('Settings','Settings')}<div class="profile"><span class="profile-avatar">NN</span><span><b>Personal account</b><small>Local-only mode</small></span><button class="icon-button" id="profile-menu" aria-label="Workspace information">•••</button></div></div>
+      <div class="sidebar-bottom"><div class="privacy-mini"><span class="lock-dot">✓</span><span><b>Private by default</b><small>Your workspace stays in this browser.</small></span></div>${navButton('Settings','Settings')}<button class="nav-item back-home-item ${activePage==='Home'?'is-home':''}" data-page="Home" aria-label="Back to Home" ${activePage==='Home'?'disabled':''}>${icon('back')}<span>Back to Home</span></button><div class="profile"><span class="profile-avatar">NN</span><span><b>Personal account</b><small>Local-only mode</small></span><button class="icon-button" id="profile-menu" aria-label="Workspace information">•••</button></div></div>
     </aside>
     <main class="main-area"><header class="topbar"><button id="mobile-menu" class="icon-button mobile-only" aria-label="Open navigation">☰</button><div class="breadcrumbs">Workspace ${icon('chevron')} <b>${activePage}</b></div><div class="top-actions"><span class="secure-pill"><i></i> On-device workspace</span><button class="icon-button" data-page="Settings" aria-label="Settings">${icon('settings')}</button></div></header>
     <section class="page"><div class="page-heading"><div><p class="eyebrow">NN WORKSPACE</p><h1>${activePage}</h1><p class="page-subtitle">${subtitle}</p></div>${activePage==='Meetings'?'<button class="primary-button" id="new-meeting">'+icon('plus')+' New meeting</button>':activePage==='Notes'?'<button class="primary-button" id="new-note">'+icon('plus')+' New note</button>':''}</div>${content}</section>
