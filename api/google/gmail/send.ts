@@ -1,4 +1,4 @@
-import { base64UrlText, errorCode, getGoogleAccessToken, getSession, GMAIL_SEND_SCOPE, originAllowed, readJson, sendJson, validEmail, type ApiRequest, type ApiResponse } from '../../../server/google';
+import { base64UrlText, consumeRateLimit, errorCode, getGoogleAccessToken, getSession, GMAIL_SEND_SCOPE, originAllowed, readJson, sendJson, validEmail, type ApiRequest, type ApiResponse } from '../../../server/google';
 
 export default async function handler(req: ApiRequest, res: ApiResponse): Promise<void> {
   if (req.method !== 'POST') {
@@ -16,6 +16,7 @@ export default async function handler(req: ApiRequest, res: ApiResponse): Promis
     const textBody = typeof body.text === 'string' ? body.text : '';
     if (!recipients.length || recipients.length > 50 || recipients.some(email => !validEmail(email))) return sendJson(res, 400, { error: 'invalid_recipients' });
     if (!subject || !textBody.trim() || textBody.length > 100000) return sendJson(res, 400, { error: 'invalid_message' });
+    if (!(await consumeRateLimit(session.hash, 'gmail_send', 20))) return sendJson(res, 429, { error: 'rate_limit_exceeded' });
     const { token } = await getGoogleAccessToken(session.hash, GMAIL_SEND_SCOPE);
     const encodedBody = base64UrlText(textBody);
     const mime = [
