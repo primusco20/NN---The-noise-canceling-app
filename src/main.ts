@@ -257,7 +257,11 @@ async function saveMeetingForm(form: HTMLFormElement, sendGoogleInvite: boolean,
         ? 'Connect Google Calendar in Settings first.'
         : result.error === 'google_reauthorization_required'
           ? 'Reconnect Google Calendar in Settings and try again.'
-          : 'Google Calendar could not send the invitation.';
+          : result.error === 'rate_limit_exceeded'
+            ? 'Hourly Google Calendar event limit reached. Try again later.'
+            : result.error === 'custom_reminder_not_supported'
+              ? 'Choose no reminder, 15 minutes, 30 minutes, or 1 hour. Custom reminders are not supported yet.'
+              : 'Google Calendar could not send the invitation.';
       throw new Error(reason);
     }
     if (typeof result.id === 'string') meeting.googleEventId = result.id;
