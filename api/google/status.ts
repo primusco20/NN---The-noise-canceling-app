@@ -1,4 +1,4 @@
-import { errorCode, getSession, sendJson, type ApiRequest, type ApiResponse } from '../_lib/google';
+import { connectionForSession, errorCode, getSession, sendJson, type ApiRequest, type ApiResponse } from '../_lib/google';
 
 export default async function handler(req: ApiRequest, res: ApiResponse): Promise<void> {
   if (req.method !== 'GET') {
@@ -8,7 +8,6 @@ export default async function handler(req: ApiRequest, res: ApiResponse): Promis
   try {
     const session = await getSession(req);
     if (!session) return sendJson(res, 200, { connected: false, gmailConnected: false, calendarConnected: false });
-    const { connectionForSession } = await import('../_lib/google');
     const connection = await connectionForSession(session.hash);
     const scopes = connection && Array.isArray(connection.scopes) ? connection.scopes as string[] : [];
     const gmailConnected = scopes.includes('https://www.googleapis.com/auth/gmail.send');
