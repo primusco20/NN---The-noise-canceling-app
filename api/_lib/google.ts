@@ -144,6 +144,9 @@ async function getConnectionByHash(hash: string): Promise<DbRow | null> {
   const rows = await dbRequest(CONNECTION_TABLE, filterHash(hash));
   return rows[0] ?? null;
 }
+export async function connectionForSession(hash: string): Promise<DbRow | null> {
+  return getConnectionByHash(hash);
+}
 async function deleteByHash(table: string, hash: string): Promise<void> {
   await dbRequest(table, 'session_hash=eq.' + encodeURIComponent(hash), 'DELETE');
 }
