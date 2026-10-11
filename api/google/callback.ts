@@ -1,4 +1,4 @@
-import { appRedirect, decryptSecret, encryptSecret, errorCode, exchangeGoogleCode, getSession, googleUserInfo, parseUrl, saveConnection, sendJson, sha256Hex, updateSession, type ApiRequest, type ApiResponse } from '../_lib/google';
+import { appRedirect, connectionForSession, encryptSecret, exchangeGoogleCode, getSession, googleUserInfo, parseUrl, saveConnection, sha256Hex, updateSession, type ApiRequest, type ApiResponse } from '../_lib/google';
 
 export default async function handler(req: ApiRequest, res: ApiResponse): Promise<void> {
   if (req.method !== 'GET') return res.redirect(302, '/?google=method-not-allowed');
@@ -21,8 +21,7 @@ export default async function handler(req: ApiRequest, res: ApiResponse): Promis
     const token = await exchangeGoogleCode(code, verifier);
     if (typeof token.access_token !== 'string') return appRedirect(res, 'failed');
     const identity = await googleUserInfo(token.access_token);
-    const connectionResult = await fetchConnection(session.hash);
-    const previous = connectionResult;
+    const previous = await connectionForSession(session.hash);
     const previousRefresh = previous && typeof previous.refresh_token_enc === 'string' ? previous.refresh_token_enc : '';
     const refreshToken = typeof token.refresh_token === 'string' && token.refresh_token ? token.refresh_token : previousRefresh;
     if (!refreshToken) return appRedirect(res, 'refresh-token-missing');
@@ -45,7 +44,3 @@ export default async function handler(req: ApiRequest, res: ApiResponse): Promis
   }
 }
 
-async function fetchConnection(hash: string): Promise<Record<string, unknown> | null> {
-  const { connectionForSession } = await import('../_lib/google');
-  return connectionForSession(hash);
-}
