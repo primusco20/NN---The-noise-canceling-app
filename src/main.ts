@@ -155,6 +155,137 @@ function startMic() {
 function stopMicrophone(){
   cancelAnimationFrame(raf);stream?.getTracks().forEach(t=>t.stop());stream=null;if(context&&context.state!=='closed')void context.close();context=null;micActive=false;
 }
+async function refreshGoogleStatus() {
+  try {
+    const response = await fetch('/api/google/status', { cache: 'no-store', headers: { Accept: 'application/json' } });
+    if (!response.ok) return;
+    const status = await response.json() as { connected?: boolean; email?: string | null; gmailConnected?: boolean; calendarConnected?: boolean };
+    const states: Record<string, boolean> = { gmail: Boolean(status.gmailConnected), 'google-calendar': Boolean(status.calendarConnected) };
+    Object.entries(states).forEach(([id, connected]) => {
+      const badge = root!.querySelector<HTMLElement>('[data-integration-status="' + id + '"]');
+      const button = root!.querySelector<HTMLButtonElement>('[data-connect-provider="' + id + '"]');
+      if (badge) { badge.textContent = connected ? 'Connected' : 'Not connected'; badge.classList.toggle('connected', connected); }
+      if (button) button.textContent = connected ? 'Reconnect' : 'Connect';
+    });
+    const control = root!.querySelector<HTMLElement>('#google-connection-control');
+    if (control) control.hidden = !status.connected;
+    const email = root!.querySelector<HTMLElement>('#google-account-email');
+    if (email) email.textContent = status.email ? 'Connected as ' + status.email : 'Google account connected';
+    const compose = root!.querySelector<HTMLElement>('#gmail-compose-panel');
+    if (compose) compose.hidden = !status.gmailConnected;
+  } catch { /* Status is informational; the integration stays disconnected if the endpoint is unavailable. */ }
+}
+function showGoogleFeedback(message: string) {
+  const feedback = root!.querySelector<HTMLElement>('#google-oauth-feedback');
+  if (feedback) { feedback.textContent = message; feedback.hidden = false; }
+}
+async function startGoogleConnect(service: 'gmail' | 'calendar', button: HTMLButtonElement) {
+  button.disabled = true;
+  const previousLabel = button.textContent || 'Connect';
+  button.textContent = 'Opening Google…';
+  try {
+    const response = await fetch('/api/google/connect', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify({ service })
+    });
+    const result = await response.json() as { authorizationUrl?: string; error?: string };
+    if (!response.ok || !result.authorizationUrl || !result.authorizationUrl.startsWith('https://accounts.google.com/o/oauth2/v2/auth?')) {
+      throw new Error(result.error || 'google_setup_incomplete');
+    }
+    window.location.assign(result.authorizationUrl);
+  } catch {
+    button.disabled = false;
+    button.textContent = previousLabel;
+    showGoogleFeedback('Google OAuth is not ready on this deployment. Confirm the server-side environment variables and apply the reviewed Supabase migration, then try again.');
+  }
+}
+async function saveMeetingForm(form: HTMLFormElement, sendGoogleInvite: boolean, fromCalendar: boolean) {
+  if (!form.reportValidity()) return;
+  const data = new FormData(form);
+  const title = String(data.get('title') ?? '').trim();
+  const date = String(data.get('date') ?? '');
+  const startTime = String(data.get('startTime') ?? '');
+  const endTime = String(data.get('endTime') ?? '');
+  const inviteEmails = String(data.get('inviteEmails') ?? '').trim();
+  if ((startTime && !endTime) || (!startTime && endTime) || (startTime && endTime && endTime <= startTime)) {
+    alert('Enter both start and end times, and make sure the end is later than the start.');
+    return;
+  }
+  if (sendGoogleInvite && !inviteEmails) {
+    alert('Add at least one invitee email address before sending a Google Calendar invitation.');
+    return;
+  }
+  const meeting: Meeting = {
+    id: crypto.randomUUID(),
+    title,
+    date,
+    attendees: String(data.get('attendees') ?? '').trim(),
+    agenda: String(data.get('agenda') ?? '').trim(),
+    createdAt: new Date().toISOString(),
+    startTime,
+    endTime,
+    timezone: String(data.get('timezone') || 'Asia/Manila'),
+    platform: String(data.get('platform') || ''),
+    location: String(data.get('location') || '').trim(),
+    inviteEmails,
+    reminder: String(data.get('reminder') || 'none')
+  };
+  meetings.push(meeting);
+  if (fromCalendar) {
+    calendarSelectedDate = date;
+    const parts = date.split('-').map(Number);
+    calendarCursor = new Date(parts[0], parts[1] - 1, 1);
+  }
+  persist();
+  if (!sendGoogleInvite) { render(); return; }
+  const button = form.querySelector<HTMLButtonElement>('[data-send-google-invite]');
+  if (button) { button.disabled = true; button.textContent = 'Saving & sending…'; }
+  try {
+    const response = await fetch('/api/google/calendar/events', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify({
+        title: meeting.title, date: meeting.date, startTime: meeting.startTime, endTime: meeting.endTime,
+        timezone: meeting.timezone, platform: meeting.platform, location: meeting.location,
+        inviteEmails: meeting.inviteEmails, agenda: meeting.agenda, reminder: meeting.reminder
+      })
+    });
+    const result = await response.json() as { id?: string; htmlLink?: string; error?: string };
+    if (!response.ok) {
+      const reason = result.error === 'google_not_connected' || result.error === 'google_scope_missing'
+        ? 'Connect Google Calendar in Settings first.'
+        : result.error === 'google_reauthorization_required'
+          ? 'Reconnect Google Calendar in Settings and try again.'
+          : 'Google Calendar could not send the invitation.';
+      throw new Error(reason);
+    }
+    if (typeof result.id === 'string') meeting.googleEventId = result.id;
+    if (typeof result.htmlLink === 'string' && result.htmlLink.startsWith('https://calendar.google.com/')) meeting.googleEventUrl = result.htmlLink;
+    persist();
+    render();
+const googleReturnStatus = new URLSearchParams(window.location.search).get('google');
+if (googleReturnStatus) {
+  navigate('Settings');
+  root!.querySelector<HTMLButtonElement>('[data-settings-tab="integrations"]')?.click();
+  const messages: Record<string,string> = {
+    'gmail-connected':'Gmail connected successfully.',
+    'calendar-connected':'Google Calendar connected successfully.',
+    'cancelled':'Google connection was cancelled.',
+    'refresh-token-missing':'Google did not return a refresh token. Retry Connect and approve the requested permissions.',
+    'session-expired':'The connection session expired. Please start again from Settings.',
+    'invalid-state':'Google authorization could not be verified. Please try connecting again.',
+    'failed':'Google connection did not complete. Check the server-side OAuth configuration and try again.'
+  };
+  showGoogleFeedback(messages[googleReturnStatus] || 'Google connection could not be completed.');
+  window.history.replaceState({}, '', window.location.pathname + window.location.hash);
+}
+    alert('Meeting saved locally and Google Calendar invitation sent.');
+  } catch (error) {
+    render();
+    alert('Meeting saved locally, but the Google Calendar invitation was not sent. ' + (error instanceof Error ? error.message : 'Please check the Google connection and try again.'));
+  }
+}
 function bindPage() {
   root!.querySelector<HTMLButtonElement>('#cal-prev')?.addEventListener('click',()=>{calendarCursor=new Date(calendarCursor.getFullYear(),calendarCursor.getMonth()-1,1);render();});
   root!.querySelector<HTMLButtonElement>('#cal-next')?.addEventListener('click',()=>{calendarCursor=new Date(calendarCursor.getFullYear(),calendarCursor.getMonth()+1,1);render();});
@@ -191,9 +322,12 @@ function bindPage() {
   root!.querySelector<HTMLSelectElement>('#appearance-select')?.addEventListener('change',e=>{settings.appearance=(e.target as HTMLSelectElement).value as Settings['appearance'];persist();render();});
   root!.querySelectorAll<HTMLButtonElement>('[data-palette]').forEach(el=>el.addEventListener('click',()=>{settings.palette=el.dataset.palette as Settings['palette'];persist();render();}));
   const integrationDialog=root!.querySelector<HTMLDialogElement>('#integration-dialog');
-  root!.querySelectorAll<HTMLButtonElement>('[data-connect-provider]').forEach(el=>el.addEventListener('click',()=>{const name=el.dataset.providerName||'this provider';const requirement=el.dataset.providerRequirement||'Provider setup required';const title=root!.querySelector<HTMLElement>('#integration-dialog-title');const message=root!.querySelector<HTMLElement>('#integration-dialog-message');if(title)title.textContent='Connect '+name;if(message)message.textContent=name+' is listed as a planned integration. '+requirement+'. The secure sign-in flow is not configured yet, so no account has been connected and no data will be accessed.';integrationDialog?.showModal();}));
+  root!.querySelectorAll<HTMLButtonElement>('[data-connect-provider]').forEach(el=>el.addEventListener('click',()=>{const provider=el.dataset.connectProvider;if(provider==='gmail'||provider==='google-calendar'){void startGoogleConnect(provider==='gmail'?'gmail':'calendar',el);return;}const name=el.dataset.providerName||'this provider';const requirement=el.dataset.providerRequirement||'Provider setup required';const title=root!.querySelector<HTMLElement>('#integration-dialog-title');const message=root!.querySelector<HTMLElement>('#integration-dialog-message');if(title)title.textContent='Connect '+name;if(message)message.textContent=name+' is listed as a planned integration. '+requirement+'. The secure sign-in flow is not configured yet, so no account has been connected and no data will be accessed.';integrationDialog?.showModal();}));
   root!.querySelector<HTMLButtonElement>('#integration-dialog-close')?.addEventListener('click',()=>integrationDialog?.close());
   root!.querySelector<HTMLButtonElement>('#integration-dialog-done')?.addEventListener('click',()=>integrationDialog?.close());
+  root!.querySelector<HTMLButtonElement>('#google-disconnect')?.addEventListener('click',async()=>{if(!confirm('Disconnect Google and revoke NN’s saved Google connection?'))return;const button=root!.querySelector<HTMLButtonElement>('#google-disconnect');if(button)button.disabled=true;try{const response=await fetch('/api/google/disconnect',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({})});if(!response.ok)throw new Error('disconnect_failed');showGoogleFeedback('Google has been disconnected from this NN browser session.');await refreshGoogleStatus();}catch{showGoogleFeedback('Could not finish disconnecting Google. Please retry.');}finally{if(button)button.disabled=false;}});
+  root!.querySelector<HTMLFormElement>('#gmail-send-form')?.addEventListener('submit',async e=>{e.preventDefault();const form=e.currentTarget as HTMLFormElement;const button=form.querySelector<HTMLButtonElement>('button[type="submit"]');const status=root!.querySelector<HTMLElement>('#gmail-send-status');if(button){button.disabled=true;button.textContent='Sending…';}if(status)status.textContent='Sending through your connected Google account…';try{const data=new FormData(form);const response=await fetch('/api/google/gmail/send',{method:'POST',headers:{'Content-Type':'application/json',Accept:'application/json'},body:JSON.stringify({to:String(data.get('to')||''),subject:String(data.get('subject')||''),text:String(data.get('text')||'')})});const result=await response.json() as {sent?:boolean;error?:string};if(!response.ok)throw new Error(result.error||'gmail_send_failed');if(status)status.textContent='Email sent from your connected Gmail account.';form.reset();}catch(error){if(status)status.textContent=error instanceof Error&&error.message==='google_not_connected'?'Connect Gmail first.':error instanceof Error&&error.message==='google_scope_missing'?'Reconnect Gmail and approve the send-email permission.':'Email was not sent. Check the Google connection and try again.';}finally{if(button){button.disabled=false;button.textContent='Send email';}}});
+  if(activePage==='Settings')void refreshGoogleStatus();
   root!.querySelector<HTMLButtonElement>('#export-data')?.addEventListener('click',()=>{const blob=new Blob([JSON.stringify({exportedAt:new Date().toISOString(),meetings,members,notes,chats,settings},null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='nn-workspace-export.json';a.click();URL.revokeObjectURL(url);});
   root!.querySelector<HTMLButtonElement>('#delete-data')?.addEventListener('click',()=>{if(confirm('Permanently delete all NN meetings, contacts, notes, chat drafts, and preferences saved in this browser? This cannot be undone.')){Object.values(KEYS).forEach(k=>localStorage.removeItem(k));meetings=[];notes=[];chats=[];members=[];settings={...defaults};selectedNote='';persist();render();}});
   const settingsSections=root!.querySelectorAll<HTMLElement>('.settings-section');settingsSections.forEach(section=>section.hidden=section.dataset.settingsSection!=='audio');
