@@ -1,4 +1,4 @@
-import { CALENDAR_SCOPE, errorCode, getGoogleAccessToken, getSession, originAllowed, readJson, sendJson, validEmail, type ApiRequest, type ApiResponse } from '../../../server/google';
+import { CALENDAR_SCOPE, consumeRateLimit, errorCode, getGoogleAccessToken, getSession, originAllowed, readJson, sendJson, validEmail, type ApiRequest, type ApiResponse } from '../../../server/google';
 
 export default async function handler(req: ApiRequest, res: ApiResponse): Promise<void> {
   if (req.method !== 'POST') {
@@ -25,6 +25,7 @@ export default async function handler(req: ApiRequest, res: ApiResponse): Promis
     if (startTime && endTime && endTime <= startTime) return sendJson(res, 400, { error: 'end_time_must_follow_start_time' });
     if (attendeeEmails.length > 100 || attendeeEmails.some(email => !validEmail(email))) return sendJson(res, 400, { error: 'invalid_invitee_email' });
     try { new Intl.DateTimeFormat('en-US', { timeZone: timezone }); } catch { return sendJson(res, 400, { error: 'invalid_time_zone' }); }
+    if (!(await consumeRateLimit(session.hash, 'calendar_create', 30))) return sendJson(res, 429, { error: 'rate_limit_exceeded' });
     const { token } = await getGoogleAccessToken(session.hash, CALENDAR_SCOPE);
     const description = [platform ? 'Platform: ' + platform : '', agenda].filter(Boolean).join('\n\n');
     const event: Record<string, unknown> = {
