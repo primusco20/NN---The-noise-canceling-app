@@ -15,7 +15,7 @@ NN is a separate, privacy-first web app for microphone checks, meeting organizat
 - **Chats:** Save local message drafts and use prompt starters. This is a local draft area, not an AI chat service; it does not generate assistant responses.
 - **Quick tools:** A floating launcher offers shortcuts to the microphone meter and local note creation. Captions and NasrinAI connection actions explicitly report that they are not enabled; they do not upload audio or claim to be connected.
 - **Settings:** Audio preferences, light/dark/system appearance, Orange/Charcoal/Galaxy color palettes, JSON export, and deletion of local workspace data.
-- **Integration directory:** Setup cards for Gmail, Outlook/Microsoft 365, Yahoo Mail, Apple Mail/iCloud Mail, generic IMAP/SMTP, Slack, Google Meet, Microsoft Teams, and Zoom. These are integration placeholders; account authorization and live data sync are not implemented until secure provider OAuth/API backends are configured.
+- **Integration directory:** Google Gmail and Google Calendar have server-side OAuth routes and explicit email/event actions; those require the setup above before they can be used. Outlook/Microsoft 365, Yahoo Mail, Apple Mail/iCloud Mail, generic IMAP/SMTP, Slack, Google Meet, Teams, and Zoom remain placeholders.
 - **Local-first data:** Meetings, contacts, notes, chats, and preferences are stored in this browser's localStorage. There is no account, cloud sync, transcription upload, or server-side persistence in this milestone.
 
 ## Run locally
@@ -47,6 +47,45 @@ npm run build
 - Apple Mail is a client rather than one universal email service. Connection support depends on the underlying account provider (for example iCloud Mail, Microsoft 365, or a supported IMAP server). Generic IMAP/SMTP support must be implemented server-side with secure credential/token handling and provider-specific restrictions.
 - Before enabling any live integration, add server-side OAuth start/callback routes, CSRF/state validation, encrypted token storage, least-privilege scopes, disconnect/revocation, privacy disclosures, and tests. Never collect email passwords or provider API secrets in browser UI code.
 - Google Meet, Teams, and Zoom meeting links can be stored as ordinary meeting details today, but importing meetings, reading transcripts, joining calls, or processing call audio requires separate platform permissions and APIs. A browser page cannot become a system-wide virtual microphone by itself.
+
+## Google OAuth integration (code added; deployment setup still required)
+
+Google account linking is implemented as server-side Vercel API routes, but it will not work until the Google Cloud OAuth client, Supabase migration, and Vercel environment variables below are configured. Those production settings have not been changed by this code change.
+
+### OAuth security model
+
+- Google authorization-code flow uses PKCE (S256), a one-time random state value, a ten-minute OAuth transaction expiry, and an exact HTTPS callback URL.
+- Gmail and Google Calendar ask for permissions separately, only when the user selects Connect for that service. Identity uses openid email; Gmail requests only https://www.googleapis.com/auth/gmail.send, and Calendar requests only https://www.googleapis.com/auth/calendar.events.owned. Calendar event creation sends invitation updates through Google Calendar.
+- The opaque browser-session cookie is Secure, HttpOnly, SameSite=Lax, and host-only. The database stores only a SHA-256 hash of the session cookie and OAuth state. Google access and refresh tokens are encrypted with AES-256-GCM before they are written to Supabase.
+- Supabase tables have RLS enabled and no access for anon or authenticated; only server-side service-role requests can access them. The service-role key, Google client secret, and token-encryption key must exist only in server-side Vercel environment variables. Never use a VITE_ prefix for these values.
+- Server-side rolling-hour limits are 20 Gmail sends and 30 Calendar event creations per browser session. Disconnect removes the stored token and requests Google token revocation.
+- The current app has no NN user-account system. Google connections are bound to the browser's opaque NN session cookie, not to a signed-in NN identity. Clearing that cookie loses the browser binding; use Disconnect before clearing site data.
+- The app's existing meetings, contacts, and notes remain in localStorage. Connecting Google does not upload that local workspace automatically.
+
+### Setup required before enabling the integration
+
+1. In Google Cloud, configure the OAuth consent screen and create an OAuth client of type Web application. Add the exact authorized redirect URI https://nn.nasrinai.com/api/google/callback. Enable the Gmail API and Google Calendar API. Add test users while the consent screen is in testing; Google may require verification before general use.
+2. Review and manually apply supabase/migrations/202610120001_google_oauth.sql to the intended Supabase project. The migration has not been executed by this code change.
+3. Add these server-side Vercel environment variables for the intended environment:
+   - NN_APP_ORIGIN=https://nn.nasrinai.com
+   - GOOGLE_REDIRECT_URI=https://nn.nasrinai.com/api/google/callback
+   - GOOGLE_CLIENT_ID
+   - GOOGLE_CLIENT_SECRET
+   - GOOGLE_TOKEN_ENCRYPTION_KEY — a base64-encoded 32-byte key; generate a new one with openssl rand -base64 32
+   - SUPABASE_URL
+   - SUPABASE_SERVICE_ROLE_KEY — service role only; never send it to the browser
+4. Keep the encryption key stable while tokens are stored. Rotating it without re-encrypting existing tokens makes those tokens unreadable and requires users to reconnect.
+5. After the environment and migration are configured, validate OAuth consent, connect/disconnect, Gmail sending, Calendar event creation/invite delivery, token refresh, rate limits, expired sessions, and revocation in a non-production test environment before any production release.
+
+### Implemented server routes
+
+- POST /api/google/connect — starts the Gmail or Calendar OAuth flow.
+- GET /api/google/callback — validates state/PKCE, exchanges the code server-side, verifies the Google email, and stores encrypted tokens.
+- GET /api/google/status and POST /api/google/disconnect — report non-secret connection status and disconnect/revoke.
+- POST /api/google/gmail/send — sends plain-text email from the connected Gmail account after an explicit user action.
+- POST /api/google/calendar/events — creates a primary-calendar event, sends attendee updates, and applies supported 15/30/60-minute popup reminders.
+
+These routes are not proof that the live Google app or production database is configured. Do not deploy or apply the migration until the settings and validation are reviewed.
 
 ## Planned sequence
 
