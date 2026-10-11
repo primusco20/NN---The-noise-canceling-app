@@ -22,6 +22,7 @@ export default async function handler(req: ApiRequest, res: ApiResponse): Promis
     if (typeof token.access_token !== 'string') return appRedirect(res, 'failed');
     const identity = await googleUserInfo(token.access_token);
     const previous = await connectionForSession(session.hash);
+    if (previous && typeof previous.google_email === 'string' && previous.google_email.toLowerCase() !== identity.email.toLowerCase()) return appRedirect(res, 'account-mismatch');
     const previousRefresh = previous && typeof previous.refresh_token_enc === 'string' ? previous.refresh_token_enc : '';
     const refreshToken = typeof token.refresh_token === 'string' && token.refresh_token ? token.refresh_token : previousRefresh;
     if (!refreshToken) return appRedirect(res, 'refresh-token-missing');
