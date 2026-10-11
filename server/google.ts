@@ -86,7 +86,9 @@ export async function sha256Base64Url(value: string): Promise<string> {
 async function encryptionKey(): Promise<CryptoKey> {
   const raw = fromBase64(env('GOOGLE_TOKEN_ENCRYPTION_KEY'));
   if (raw.byteLength !== 32) throw new Error('token_encryption_key_invalid');
-  return crypto.subtle.importKey('raw', raw, { name: 'AES-GCM' }, false, ['encrypt', 'decrypt']);
+  const keyBytes = new Uint8Array(new ArrayBuffer(raw.byteLength));
+  keyBytes.set(raw);
+  return crypto.subtle.importKey('raw', keyBytes, { name: 'AES-GCM' }, false, ['encrypt', 'decrypt']);
 }
 export async function encryptSecret(value: string): Promise<string> {
   const iv = crypto.getRandomValues(new Uint8Array(12));
