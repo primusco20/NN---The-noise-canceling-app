@@ -43,7 +43,9 @@ export function header(req: ApiRequest, name: string): string {
   return Array.isArray(value) ? value[0] ?? '' : value ?? '';
 }
 export function appOrigin(): string {
-  return env('NN_APP_ORIGIN').replace(/\/+$/, '');
+  const configured = env('NN_APP_ORIGIN').replace(/\/+$/, '');
+  try { const parsed = new URL(configured); return parsed.protocol === 'https:' && parsed.origin === configured ? parsed.origin : ''; }
+  catch { return ''; }
 }
 export function originAllowed(req: ApiRequest): boolean {
   const expected = appOrigin();
@@ -196,10 +198,20 @@ export async function saveConnection(row: Record<string, unknown>): Promise<DbRo
 export async function deleteConnection(hash: string): Promise<void> {
   await deleteByHash(CONNECTION_TABLE, hash);
 }
+export async function consumeRateLimit(hash: string, action: string, limit: number): Promise<boolean> {
+  const config = supabaseConfig();
+  const response = await fetch(config.url + '/rest/v1/rpc/nn_consume_google_rate_limit', {
+    method: 'POST',
+    headers: { apikey: config.key, Authorization: 'Bearer ' + config.key, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ p_session_hash: hash, p_action: action, p_limit: limit })
+  });
+  if (!response.ok) throw new Error('server_rate_limit_request_failed');
+  return (await response.json()) === true;
+}
 export async function googleAuthUrl(service: 'gmail' | 'calendar', state: string, challenge: string, existingConnection: DbRow | null): Promise<string> {
   const clientId = env('GOOGLE_CLIENT_ID');
   const redirectUri = env('GOOGLE_REDIRECT_URI');
-  if (!clientId || !redirectUri || !appOrigin()) throw new Error('google_oauth_config_missing');
+  if (!clientId || !redirectUri || !appOrigin() || redirectUri !== appOrigin() + '/api/google/callback') throw new Error('google_oauth_config_missing');
   const scope = service === 'gmail' ? GMAIL_SEND_SCOPE : CALENDAR_SCOPE;
   const params = new URLSearchParams({
     client_id: clientId,
@@ -219,7 +231,7 @@ export async function exchangeGoogleCode(code: string, verifier: string): Promis
   const clientId = env('GOOGLE_CLIENT_ID');
   const clientSecret = env('GOOGLE_CLIENT_SECRET');
   const redirectUri = env('GOOGLE_REDIRECT_URI');
-  if (!clientId || !clientSecret || !redirectUri) throw new Error('google_oauth_config_missing');
+  if (!clientId || !clientSecret || !redirectUri || !appOrigin() || redirectUri !== appOrigin() + '/api/google/callback') throw new Error('google_oauth_config_missing');
   const response = await fetch(GOOGLE_TOKEN, {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
