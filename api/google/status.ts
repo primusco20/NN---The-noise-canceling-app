@@ -1,4 +1,4 @@
-import { connectionForSession, errorCode, getSession, sendJson, type ApiRequest, type ApiResponse } from '../_lib/google';
+import { connectionForSession, errorCode, getSession, sendJson, type ApiRequest, type ApiResponse } from '../../server/google';
 
 export default async function handler(req: ApiRequest, res: ApiResponse): Promise<void> {
   if (req.method !== 'GET') {
