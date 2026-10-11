@@ -310,3 +310,10 @@ export function validEmail(value: string): boolean {
 export function base64UrlText(value: string): string {
   return base64Url(new TextEncoder().encode(value));
 }
+export function base64MimeText(value: string): string {
+  const bytes = new TextEncoder().encode(value);
+  let binary = '';
+  for (const byte of bytes) binary += String.fromCharCode(byte);
+  const base64 = btoa(binary);
+  return base64.match(/.{1,76}/g)?.join('\r\n') ?? '';
+}
