@@ -110,7 +110,7 @@ function startMic() {
       const tick=()=>{if(!analyser)return;analyser.getByteTimeDomainData(data);let sum=0;for(const v of data){const n=(v-128)/128;sum+=n*n;}level.value=Math.min(1,Math.sqrt(sum/data.length)*4);raf=requestAnimationFrame(tick);};tick();
     } catch(e) { stream?.getTracks().forEach(t=>t.stop());stream=null;start.disabled=false;status.textContent='Needs attention';notice.textContent=e instanceof DOMException&&e.name==='NotAllowedError'?'Microphone permission denied. Allow access in browser settings, then retry.':'Could not start the microphone. Check the selected device and permissions.'; }
   };
-  const stopHandler=()=>stopMicrophone();
+  const stopHandler=()=>{stopMicrophone();render();};
   start.addEventListener('click',()=>void startHandler());stop.addEventListener('click',stopHandler);
   root!.querySelector<HTMLButtonElement>('#home-mic')?.addEventListener('click',()=>{if(micActive){stopMicrophone();render();}else{void startHandler();}});
 }
