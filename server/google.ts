@@ -108,7 +108,7 @@ function cookieValue(req: ApiRequest, name: string): string {
   const cookie = header(req, 'cookie');
   for (const part of cookie.split(';')) {
     const index = part.indexOf('=');
-    if (index > 0 && part.slice(0, index).trim() === name) return decodeURIComponent(part.slice(index + 1).trim());
+    if (index > 0 && part.slice(0, index).trim() === name) return part.slice(index + 1).trim();
   }
   return '';
 }
