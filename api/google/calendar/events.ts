@@ -36,8 +36,11 @@ export default async function handler(req: ApiRequest, res: ApiResponse): Promis
       ...(description ? { description } : {}),
       ...(attendeeEmails.length ? { attendees: attendeeEmails.map(email => ({ email })) } : {})
     };
-    const reminderMinutes = ['15', '30', '60'].includes(String(body.reminder ?? '')) ? Number(body.reminder) : 0;
-    if (reminderMinutes) event.reminders = { useDefault: false, overrides: [{ method: 'popup', minutes: reminderMinutes }] };
+    const reminderChoice = String(body.reminder ?? 'none');
+    if (reminderChoice === 'custom') return sendJson(res, 400, { error: 'custom_reminder_not_supported' });
+    const reminderMinutes = ['15', '30', '60'].includes(reminderChoice) ? Number(reminderChoice) : 0;
+    if (reminderChoice === 'none') event.reminders = { useDefault: false, overrides: [] };
+    else if (reminderMinutes) event.reminders = { useDefault: false, overrides: [{ method: 'popup', minutes: reminderMinutes }] };
     if (startTime || endTime) {
       if (!startTime || !endTime) return sendJson(res, 400, { error: 'both_start_and_end_time_required' });
       event.start = { dateTime: date + 'T' + startTime + ':00', timeZone: timezone };
