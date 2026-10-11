@@ -1,4 +1,4 @@
-import { deleteConnection, decryptSecret, errorCode, getSession, header, originAllowed, revokeGoogleToken, sendJson, type ApiRequest, type ApiResponse } from '../_lib/google';
+import { connectionForSession, deleteConnection, decryptSecret, errorCode, getSession, originAllowed, revokeGoogleToken, sendJson, type ApiRequest, type ApiResponse } from '../_lib/google';
 
 export default async function handler(req: ApiRequest, res: ApiResponse): Promise<void> {
   if (req.method !== 'POST') {
@@ -9,7 +9,6 @@ export default async function handler(req: ApiRequest, res: ApiResponse): Promis
   try {
     const session = await getSession(req);
     if (!session) return sendJson(res, 200, { disconnected: true });
-    const { connectionForSession } = await import('../_lib/google');
     const connection = await connectionForSession(session.hash);
     if (connection) {
       const encrypted = typeof connection.refresh_token_enc === 'string' && connection.refresh_token_enc
