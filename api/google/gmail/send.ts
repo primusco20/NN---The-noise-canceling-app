@@ -1,4 +1,4 @@
-import { base64UrlText, errorCode, getGoogleAccessToken, getSession, GMAIL_SEND_SCOPE, originAllowed, readJson, sendJson, validEmail, type ApiRequest, type ApiResponse } from '../../_lib/google';
+import { base64UrlText, errorCode, getGoogleAccessToken, getSession, GMAIL_SEND_SCOPE, originAllowed, readJson, sendJson, validEmail, type ApiRequest, type ApiResponse } from '../../../server/google';
 
 export default async function handler(req: ApiRequest, res: ApiResponse): Promise<void> {
   if (req.method !== 'POST') {
