@@ -118,6 +118,7 @@ function stopMicrophone(){
   cancelAnimationFrame(raf);stream?.getTracks().forEach(t=>t.stop());stream=null;if(context&&context.state!=='closed')void context.close();context=null;micActive=false;
 }
 function bindPage() {
+  startMic();
   root!.querySelector<HTMLButtonElement>('#new-meeting')?.addEventListener('click',()=> (root!.querySelector<HTMLDialogElement>('#meeting-dialog'))?.showModal());
   root!.querySelector<HTMLButtonElement>('#empty-meeting')?.addEventListener('click',()=> (root!.querySelector<HTMLDialogElement>('#meeting-dialog'))?.showModal());
   root!.querySelector<HTMLButtonElement>('#close-meeting')?.addEventListener('click',()=> (root!.querySelector<HTMLDialogElement>('#meeting-dialog'))?.close());
@@ -139,6 +140,7 @@ function bindPage() {
   root!.querySelector<HTMLSelectElement>('#theme-select')?.addEventListener('change',e=>{settings.theme=(e.target as HTMLSelectElement).value as Settings['theme'];persist();render();});
   root!.querySelector<HTMLButtonElement>('#export-data')?.addEventListener('click',()=>{const blob=new Blob([JSON.stringify({exportedAt:new Date().toISOString(),meetings,notes,chats,settings},null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='nn-workspace-export.json';a.click();URL.revokeObjectURL(url);});
   root!.querySelector<HTMLButtonElement>('#delete-data')?.addEventListener('click',()=>{if(confirm('Permanently delete all NN meetings, notes, chat drafts, and preferences saved in this browser? This cannot be undone.')){Object.values(KEYS).forEach(k=>localStorage.removeItem(k));meetings=[];notes=[];chats=[];settings={...defaults};selectedNote='';persist();render();}});
+  const settingsSections=root!.querySelectorAll<HTMLElement>('.settings-section');settingsSections.forEach((s,i)=>s.hidden=i!==0);
   root!.querySelectorAll<HTMLElement>('[data-settings-tab]').forEach(el=>el.addEventListener('click',()=>{const target=el.dataset.settingsTab;root!.querySelectorAll('[data-settings-tab]').forEach(x=>x.classList.toggle('active',x===el));const sections=root!.querySelectorAll<HTMLElement>('.settings-section');sections.forEach((s,i)=>s.hidden=(target==='audio'&&i!==0)||(target==='privacy'&&i!==1)||(target==='appearance'&&i!==2)||(target==='about'&&i!==3));}));
   root!.querySelectorAll<HTMLButtonElement>('.stat-card,.quick-card').forEach(el=>el.addEventListener('click',()=>{const p=el.dataset.page;if(p)navigate(p);}));
 }
