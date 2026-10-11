@@ -77,6 +77,10 @@ export async function sha256Hex(value: string): Promise<string> {
   const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value));
   return Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, '0')).join('');
 }
+export async function sha256Base64Url(value: string): Promise<string> {
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value));
+  return base64Url(new Uint8Array(digest));
+}
 async function encryptionKey(): Promise<CryptoKey> {
   const raw = fromBase64(env('GOOGLE_TOKEN_ENCRYPTION_KEY'));
   if (raw.byteLength !== 32) throw new Error('token_encryption_key_invalid');
